@@ -1,0 +1,33 @@
+============================================================
+ REPORTE DE BIOSEGURIDAD - INICIADO: 2026-07-06 12:44:09
+============================================================
+
+[2026-07-06 12:47:39] Personas en escena: 2 | Con Mascarilla: 1 | Sin Mascarilla: 1 ⚠️ ALERTA: Incumplimiento detectado
+[2026-07-06 12:47:40] Personas en escena: 2 | Con Mascarilla: 1 | Sin Mascarilla: 1 ⚠️ ALERTA: Incumplimiento detectado
+[2026-07-06 12:47:41] Personas en escena: 3 | Con Mascarilla: 3 | Sin Mascarilla: 0
+[2026-07-06 12:47:42] Personas en escena: 4 | Con Mascarilla: 3 | Sin Mascarilla: 1 ⚠️ ALERTA: Incumplimiento detectado
+[2026-07-06 12:47:43] Personas en escena: 2 | Con Mascarilla: 1 | Sin Mascarilla: 1 ⚠️ ALERTA: Incumplimiento detectado
+[2026-07-06 12:47:44] Personas en escena: 3 | Con Mascarilla: 1 | Sin Mascarilla: 2 ⚠️ ALERTA: Incumplimiento detectado
+[2026-07-06 12:47:45] Personas en escena: 3 | Con Mascarilla: 2 | Sin Mascarilla: 1 ⚠️ ALERTA: Incumplimiento detectado
+[2026-07-06 12:47:46] Personas en escena: 2 | Con Mascarilla: 1 | Sin Mascarilla: 1 ⚠️ ALERTA: Incumplimiento detectado
+[2026-07-06 12:47:47] Personas en escena: 3 | Con Mascarilla: 1 | Sin Mascarilla: 2 ⚠️ ALERTA: Incumplimiento detectado
+[2026-07-06 12:47:48] Personas en escena: 3 | Con Mascarilla: 1 | Sin Mascarilla: 2 ⚠️ ALERTA: Incumplimiento detectado
+[2026-07-06 12:47:49] Personas en escena: 1 | Con Mascarilla: 0 | Sin Mascarilla: 1 ⚠️ ALERTA: Incumplimiento detectado
+[2026-07-06 12:47:50] Personas en escena: 2 | Con Mascarilla: 1 | Sin Mascarilla: 1 ⚠️ ALERTA: Incumplimiento detectado
+[2026-07-06 12:47:51] Personas en escena: 1 | Con Mascarilla: 0 | Sin Mascarilla: 1 ⚠️ ALERTA: Incumplimiento detectado
+[2026-07-06 12:47:52] Personas en escena: 2 | Con Mascarilla: 2 | Sin Mascarilla: 0
+[2026-07-06 12:47:53] Personas en escena: 2 | Con Mascarilla: 2 | Sin Mascarilla: 0
+[2026-07-06 12:47:54] Personas en escena: 1 | Con Mascarilla: 0 | Sin Mascarilla: 1 ⚠️ ALERTA: Incumplimiento detectado
+[2026-07-06 12:47:55] Personas en escena: 2 | Con Mascarilla: 1 | Sin Mascarilla: 1 ⚠️ ALERTA: Incumplimiento detectado
+[2026-07-06 12:47:56] Personas en escena: 2 | Con Mascarilla: 2 | Sin Mascarilla: 0
+[2026-07-06 12:47:57] Personas en escena: 2 | Con Mascarilla: 2 | Sin Mascarilla: 0
+[2026-07-06 12:47:58] Personas en escena: 1 | Con Mascarilla: 1 | Sin Mascarilla: 0
+[2026-07-06 12:47:59] Personas en escena: 1 | Con Mascarilla: 1 | Sin Mascarilla: 0
+[2026-07-06 12:48:00] Personas en escena: 1 | Con Mascarilla: 1 | Sin Mascarilla: 0
+[2026-07-06 12:48:01] Personas en escena: 1 | Con Mascarilla: 1 | Sin Mascarilla: 0
+[2026-07-06 12:48:02] Personas en escena: 1 | Con Mascarilla: 0 | Sin Mascarilla: 1 ⚠️ ALERTA: Incumplimiento detectado
+[2026-07-06 12:48:03] Personas en escena: 1 | Con Mascarilla: 0 | Sin Mascarilla: 1 ⚠️ ALERTA: Incumplimiento detectado
+[2026-07-06 12:48:04] Personas en escena: 1 | Con Mascarilla: 0 | Sin Mascarilla: 1 ⚠️ ALERTA: Incumplimiento detectado
+[2026-07-06 12:48:05] Personas en escena: 2 | Con Mascarilla: 1 | Sin Mascarilla: 1 ⚠️ ALERTA: Incumplimiento detectado
+[2026-07-06 12:48:06] Personas en escena: 3 | Con Mascarilla: 1 | Sin Mascarilla: 2 ⚠️ ALERTA: Incumplimiento detectado
+[2026-07-06 12:48:07] Personas en escena: 1 | Con Mascarilla: 0 | Sin Mascarilla: 1 ⚠️ ALERTA: Incumplimiento detectado
