@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+
+{% block title %}Métricas Diarias · Bioseguridad{% endblock %}
+{% block page_title %}Métricas y Estadísticas Diarias{% endblock %}
+
+{% block content %}
+<div class="grid-3 mb-4">
+    <div class="card">
+        <div class="card-title">Total Detectado Hoy</div>
+        <div class="card-value" id="daily_total">0</div>
+        <div class="metric-footer">Personas analizadas</div>
+    </div>
+    <div class="card">
+        <div class="card-title">Cumplimiento (Con Mascarilla)</div>
+        <div class="card-value success" id="daily_con">0</div>
+        <div class="metric-footer">Personas</div>
+    </div>
+    <div class="card">
+        <div class="card-title">Incumplimiento (Sin Mascarilla)</div>
+        <div class="card-value danger" id="daily_sin">0</div>
+        <div class="metric-footer">Personas</div>
+    </div>
+</div>
+
+<div class="grid-2">
+    <div class="card">
+        <h3 class="mb-4" style="font-size: 1.125rem; font-weight: 700;">Distribución de Cumplimiento</h3>
+        
+        <div class="metric-item">
+            <div class="metric-header">
+                <span>Con Mascarilla</span>
+                <span class="metric-value text-success" id="daily_pct_con">0.0%</span>
+            </div>
+            <div class="progress-bar-bg">
+                <div class="progress-bar-fill success" id="bar_con" style="width: 0%"></div>
+            </div>
+        </div>
+        
+        <div class="metric-item mt-4">
+            <div class="metric-header">
+                <span>Sin Mascarilla</span>
+                <span class="metric-value text-danger" id="daily_pct_sin">0.0%</span>
+            </div>
+            <div class="progress-bar-bg">
+                <div class="progress-bar-fill danger" id="bar_sin" style="width: 0%"></div>
+            </div>
+        </div>
+        
+        <div class="mt-4 text-secondary" style="font-size: 0.875rem;">
+            Última actualización: <span id="last_update">--</span>
+        </div>
+    </div>
+
+    <div>
+        <div class="recommendation-box mt-0">
+            <h3 id="recommendation_title">
+                <i class="ph-fill ph-lightbulb"></i>
+                Esperando datos
+            </h3>
+            <p id="recommendation_text">Aún no hay suficiente información diaria para generar una recomendación.</p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    window.addEventListener('appStateUpdated', (e) => {
+        const data = e.detail;
+        
+        document.getElementById('daily_total').textContent = data.daily_total;
+        document.getElementById('daily_con').textContent = data.daily_con;
+        document.getElementById('daily_sin').textContent = data.daily_sin;
+        
+        document.getElementById('daily_pct_con').textContent = (data.daily_pct_con || 0).toFixed(1) + '%';
+        document.getElementById('daily_pct_sin').textContent = (data.daily_pct_sin || 0).toFixed(1) + '%';
+        
+        document.getElementById('bar_con').style.width = `${Math.min(100, data.daily_pct_con || 0)}%`;
+        document.getElementById('bar_sin').style.width = `${Math.min(100, data.daily_pct_sin || 0)}%`;
+        
+        document.getElementById('last_update').textContent = data.last_update || '--';
+        
+        document.getElementById('recommendation_title').innerHTML = `<i class="ph-fill ph-lightbulb"></i> ${data.recommendation_title || 'Esperando datos'}`;
+        document.getElementById('recommendation_text').textContent = data.recommendation_text || 'Aún no hay suficiente información diaria para una recomendación.';
+    });
+</script>
+{% endblock %}

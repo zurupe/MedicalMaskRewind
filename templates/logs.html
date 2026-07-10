@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+
+{% block title %}Registros y Alertas · Bioseguridad{% endblock %}
+{% block page_title %}Historial de Registros{% endblock %}
+
+{% block content %}
+<div class="grid-2">
+    <div class="card">
+        <h3 class="mb-4" style="font-size: 1.125rem; font-weight: 700;">Últimas Detecciones</h3>
+        <div class="table-container">
+            <table id="logs-table">
+                <thead>
+                    <tr>
+                        <th>Fecha y Hora</th>
+                        <th>Total</th>
+                        <th>Con Mascarilla</th>
+                        <th>Sin Mascarilla</th>
+                        <th>Estado</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td colspan="5" style="text-align: center;">Cargando registros...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="card">
+        <h3 class="mb-4" style="font-size: 1.125rem; font-weight: 700; color: var(--danger);">Historial de Alertas</h3>
+        <div class="table-container">
+            <table id="alerts-table">
+                <thead>
+                    <tr>
+                        <th>Fecha y Hora</th>
+                        <th>Infractores (Sin Mascarilla)</th>
+                        <th>Nivel</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td colspan="3" style="text-align: center;">Cargando alertas...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    async function fetchLogs() {
+        try {
+            const res = await fetch('/api/logs_data');
+            const data = await res.json();
+            
+            // Llenar tabla de registros
+            const logsBody = document.querySelector('#logs-table tbody');
+            logsBody.innerHTML = '';
+            if (data.logs && data.logs.length > 0) {
+                data.logs.forEach(log => {
+                    // Parse log string: "[2026-07-10 12:34:56] Personas: 5 | Con: 4 | Sin: 1 ⚠️"
+                    // As per logger.py: f"[{row[0]}] Personas: {row[1]} | Con: {row[2]} | Sin: {row[3]}" + (" ⚠️" if row[4] else "")
+                    
+                    const logStr = log.toString();
+                    const timestampMatch = logStr.match(/\[(.*?)\]/);
+                    const timestamp = timestampMatch ? timestampMatch[1] : '--';
+                    
+                    const personasMatch = logStr.match(/Personas:\s*(\d+)/);
+                    const conMatch = logStr.match(/Con:\s*(\d+)/);
+                    const sinMatch = logStr.match(/Sin:\s*(\d+)/);
+                    
+                    const hasAlert = logStr.includes('⚠️');
+                    
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${timestamp}</td>
+                        <td>${personasMatch ? personasMatch[1] : 0}</td>
+                        <td>${conMatch ? conMatch[1] : 0}</td>
+                        <td style="color: ${sinMatch && parseInt(sinMatch[1]) > 0 ? 'var(--danger)' : 'inherit'}; font-weight: ${sinMatch && parseInt(sinMatch[1]) > 0 ? '700' : 'normal'}">${sinMatch ? sinMatch[1] : 0}</td>
+                        <td>
+                            ${hasAlert ? '<span class="badge danger">Alerta</span>' : '<span class="badge success">OK</span>'}
+                        </td>
+                    `;
+                    logsBody.appendChild(tr);
+                });
+            } else {
+                logsBody.innerHTML = '<tr><td colspan="5" style="text-align: center;">No hay registros disponibles.</td></tr>';
+            }
+
+            // Llenar tabla de alertas
+            const alertsBody = document.querySelector('#alerts-table tbody');
+            alertsBody.innerHTML = '';
+            if (data.alerts && data.alerts.length > 0) {
+                data.alerts.forEach(alert => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${alert.timestamp}</td>
+                        <td style="font-weight: 700; color: var(--danger);">${alert.sin_mascarilla}</td>
+                        <td><span class="badge danger">Infracción</span></td>
+                    `;
+                    alertsBody.appendChild(tr);
+                });
+            } else {
+                alertsBody.innerHTML = '<tr><td colspan="3" style="text-align: center;">No hay alertas registradas.</td></tr>';
+            }
+
+        } catch (e) {
+            console.error("Error fetching logs:", e);
+        }
+    }
+
+    // Actualizar logs cada 5 segundos
+    fetchLogs();
+    setInterval(fetchLogs, 5000);
+</script>
+{% endblock %}

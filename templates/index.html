@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block title %}Vista en Vivo · Bioseguridad{% endblock %}
+{% block page_title %}Monitoreo en Tiempo Real{% endblock %}
+
+{% block content %}
+<!-- Alerta de infracción en tiempo real -->
+<div class="alert-banner" id="live-alert">
+    <i class="ph ph-warning-circle" style="font-size: 1.25rem;"></i>
+    <span id="live-alert-text">Alerta: Se detectó persona sin mascarilla</span>
+</div>
+
+<div class="grid-3 mb-4">
+    <div class="card">
+        <div class="card-title">Detecciones (En Pantalla)</div>
+        <div class="card-value" id="current_total">0</div>
+    </div>
+    <div class="card">
+        <div class="card-title">Con Mascarilla</div>
+        <div class="card-value success" id="current_con">0</div>
+    </div>
+    <div class="card">
+        <div class="card-title">Sin Mascarilla</div>
+        <div class="card-value danger" id="current_sin">0</div>
+    </div>
+</div>
+
+<div class="card" style="padding: 0; overflow: hidden; background: #000; border: none;">
+    <div class="video-container">
+        <img id="video_feed" src="{{ url_for('video_feed') }}" alt="Video Stream">
+        <div class="video-overlay-status" id="video-overlay">Cargando stream...</div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    window.addEventListener('appStateUpdated', (e) => {
+        const data = e.detail;
+        
+        // Actualizar tarjetas rápidas
+        document.getElementById('current_total').textContent = data.total;
+        document.getElementById('current_con').textContent = data.con_mascarilla;
+        document.getElementById('current_sin').textContent = data.sin_mascarilla;
+        
+        // Actualizar banner de alerta en vivo
+        const alertBanner = document.getElementById('live-alert');
+        if (data.alerta) {
+            alertBanner.classList.add('active');
+        } else {
+            alertBanner.classList.remove('active');
+        }
+
+        // Overlay de la cámara
+        const overlay = document.getElementById('video-overlay');
+        if (data.video_ready) {
+            overlay.style.display = 'none';
+        } else {
+            overlay.style.display = 'block';
+            overlay.textContent = 'Esperando cámara...';
+        }
+    });
+</script>
+{% endblock %}

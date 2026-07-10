@@ -121,7 +121,28 @@ def background_loop():
 
 @app.route('/')
 def index():
-    return render_template('dashboard.html')
+    return render_template('index.html')
+
+
+@app.route('/metrics')
+def metrics():
+    return render_template('metrics.html')
+
+
+@app.route('/logs')
+def logs():
+    return render_template('logs.html')
+
+
+@app.route('/api/logs_data')
+def api_logs_data():
+    if detector is not None:
+        logs_list = detector.logger.leer_registros(limit=50)
+        alerts_list = detector.logger.obtener_alertas(limit=50)
+    else:
+        logs_list = logger.leer_registros(limit=50)
+        alerts_list = logger.obtener_alertas(limit=50)
+    return jsonify({"logs": logs_list, "alerts": alerts_list})
 
 
 @app.route('/api/state')

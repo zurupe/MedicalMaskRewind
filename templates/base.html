@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Panel de Bioseguridad{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <!-- Phosphor Icons for premium icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+</head>
+<body>
+
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <i class="ph-fill ph-shield-check"></i>
+            <span>Bioseguridad</span>
+        </div>
+        <ul class="nav-links">
+            <li>
+                <a href="{{ url_for('index') }}" class="{% if request.endpoint == 'index' %}active{% endif %}">
+                    <i class="ph ph-video-camera"></i>
+                    Vista en Vivo
+                </a>
+            </li>
+            <li>
+                <a href="{{ url_for('metrics') }}" class="{% if request.endpoint == 'metrics' %}active{% endif %}">
+                    <i class="ph ph-chart-pie-slice"></i>
+                    Métricas
+                </a>
+            </li>
+            <li>
+                <a href="{{ url_for('logs') }}" class="{% if request.endpoint == 'logs' %}active{% endif %}">
+                    <i class="ph ph-list-dashes"></i>
+                    Registros
+                </a>
+            </li>
+        </ul>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+        <!-- Topbar -->
+        <header class="topbar">
+            <div class="page-title">
+                {% block page_title %}Dashboard{% endblock %}
+            </div>
+            <div class="status-indicator" id="global-status-indicator">
+                <div class="status-dot" id="global-status-dot"></div>
+                <span id="global-status-text">Conectando...</span>
+            </div>
+        </header>
+
+        <!-- Content -->
+        <div class="content-wrapper">
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+
+    <!-- Global State Fetcher (for status indicator and alerts) -->
+    <script>
+        async function fetchGlobalState() {
+            try {
+                const res = await fetch('/api/state');
+                if (!res.ok) throw new Error('Network error');
+                const data = await res.json();
+                
+                const dot = document.getElementById('global-status-dot');
+                const txt = document.getElementById('global-status-text');
+                
+                if (data.camera_status === 'running') {
+                    dot.classList.add('active');
+                    txt.textContent = 'Sistema Activo';
+                } else {
+                    dot.classList.remove('active');
+                    txt.textContent = data.camera_status || 'Inactivo';
+                }
+
+                // Disparar evento para que cada página pueda actualizarse
+                window.dispatchEvent(new CustomEvent('appStateUpdated', { detail: data }));
+            } catch (err) {
+                console.error("Error fetching state:", err);
+                document.getElementById('global-status-text').textContent = 'Desconectado';
+                document.getElementById('global-status-dot').classList.remove('active');
+            }
+        }
+
+        setInterval(fetchGlobalState, 2000);
+        fetchGlobalState();
+    </script>
+    
+    {% block scripts %}{% endblock %}
+</body>
+</html>

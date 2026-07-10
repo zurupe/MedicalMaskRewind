@@ -1,10 +1,10 @@
 {
-  "timestamp": "2026-07-08 12:37:38",
-  "total": 3,
-  "con_mascarilla": 1,
-  "sin_mascarilla": 2,
+  "timestamp": "2026-07-10 11:37:52",
+  "total": 1,
+  "con_mascarilla": 0,
+  "sin_mascarilla": 1,
   "alerta": true,
-  "porcentaje_con": 33.33,
-  "porcentaje_sin": 66.67,
-  "registros": 129
+  "porcentaje_con": 0.0,
+  "porcentaje_sin": 100.0,
+  "registros": 7
 }
