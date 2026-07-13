@@ -179,3 +179,48 @@ class BioseguridadLogger:
             "porcentaje_con": round((con_mascarilla / total) * 100, 2) if total else 0.0,
             "porcentaje_sin": round((sin_mascarilla / total) * 100, 2) if total else 0.0,
         }
+
+    def obtener_resumen_por_fechas(self, fecha_inicio, fecha_fin):
+        conn = sqlite3.connect(self.db_path)
+        # Fetch totals
+        cursor = conn.execute(
+            "SELECT COALESCE(SUM(total), 0), COALESCE(SUM(con_mascarilla), 0), COALESCE(SUM(sin_mascarilla), 0) FROM detecciones WHERE substr(timestamp, 1, 10) >= ? AND substr(timestamp, 1, 10) <= ?",
+            (fecha_inicio, fecha_fin),
+        )
+        row = cursor.fetchone()
+        
+        total = int(row[0] or 0)
+        con_mascarilla = int(row[1] or 0)
+        sin_mascarilla = int(row[2] or 0)
+        
+        # Fetch details per day
+        cursor_daily = conn.execute(
+            "SELECT substr(timestamp, 1, 10) as fecha, SUM(total), SUM(con_mascarilla), SUM(sin_mascarilla) FROM detecciones WHERE substr(timestamp, 1, 10) >= ? AND substr(timestamp, 1, 10) <= ? GROUP BY fecha ORDER BY fecha DESC",
+            (fecha_inicio, fecha_fin),
+        )
+        daily_rows = cursor_daily.fetchall()
+        conn.close()
+        
+        daily_data = []
+        for d in daily_rows:
+            d_total = int(d[1] or 0)
+            d_con = int(d[2] or 0)
+            d_sin = int(d[3] or 0)
+            daily_data.append({
+                "fecha": d[0],
+                "total": d_total,
+                "con": d_con,
+                "sin": d_sin,
+                "pct_con": round((d_con / d_total) * 100, 2) if d_total else 0.0,
+                "pct_sin": round((d_sin / d_total) * 100, 2) if d_total else 0.0
+            })
+
+        return {
+            "rango": f"{fecha_inicio} a {fecha_fin}",
+            "total": total,
+            "con_mascarilla": con_mascarilla,
+            "sin_mascarilla": sin_mascarilla,
+            "porcentaje_con": round((con_mascarilla / total) * 100, 2) if total else 0.0,
+            "porcentaje_sin": round((sin_mascarilla / total) * 100, 2) if total else 0.0,
+            "detalles": daily_data
+        }

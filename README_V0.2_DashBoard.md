@@ -61,3 +61,20 @@ Notas:
 - `logger.py`: guardado a SQLite + resumen diario
 
 Si quieres, genero también un changelog con los diffs aplicados.
+
+---
+
+## Actualización - 13 de Julio de 2026
+Se ha realizado una refactorización de la interfaz y se ha añadido Inteligencia Artificial para el análisis de los datos históricos.
+
+### Cambios realizados:
+- **Refactorización de Vistas:**
+  - **Vista en Vivo (`index.html`)**: Se limpió la interfaz para mostrar única y exclusivamente la transmisión en tiempo real de la cámara, sin distracciones.
+  - **Dashboard (`metrics.html`)**: Se agruparon las estadísticas de monitoreo en tiempo real junto con los acumulados diarios en un solo lugar, mejorando la organización de los datos.
+  - **Historial (`logs.html`)**: Se rediseñó la vista para permitir la consulta de los registros y niveles de cumplimiento por un rango de fechas determinado.
+- **Integración de Inteligencia Artificial (Groq):**
+  - Se añadió la capacidad de interpretar los datos consultados por fecha y generar un breve informe profesional con conclusiones utilizando el modelo **`llama-3.1-8b-instant`** a través de la API de Groq.
+  - La clave de API de Groq se integró de forma predeterminada y segura en el servidor, por lo que el usuario final ya no necesita ingresarla manualmente en la interfaz web.
+- **Backend (`app.py` & `logger.py`):**
+  - Se crearon nuevos endpoints en Flask (`/api/logs_by_date`, `/api/generate_ai_report`).
+  - Se agregaron métodos en SQLite (`obtener_resumen_por_fechas`) para recuperar, agrupar y calcular resúmenes de fechas pasadas eficientemente.

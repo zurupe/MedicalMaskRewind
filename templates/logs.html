@@ -1,12 +1,65 @@
 {% extends "base.html" %}
 
-{% block title %}Registros y Alertas · Bioseguridad{% endblock %}
-{% block page_title %}Historial de Registros{% endblock %}
+{% block title %}Historial y Análisis IA · Bioseguridad{% endblock %}
+{% block page_title %}Historial y Análisis por Fechas{% endblock %}
 
 {% block content %}
+<div class="card mb-4">
+    <h3 class="section-title">Consulta por Fechas</h3>
+    <form id="date-query-form" style="display: flex; gap: 1rem; align-items: flex-end; flex-wrap: wrap;">
+        <div class="form-group">
+            <label for="fecha_inicio" class="form-label">Fecha Inicio</label>
+            <input type="date" id="fecha_inicio" class="form-input" required>
+        </div>
+        <div class="form-group">
+            <label for="fecha_fin" class="form-label">Fecha Fin</label>
+            <input type="date" id="fecha_fin" class="form-input" required>
+        </div>
+        <button type="submit" class="btn-primary">
+            <i class="ph ph-magnifying-glass"></i>
+            Consultar e Interpretar con IA
+        </button>
+    </form>
+</div>
+
+<div class="grid-2 mb-4">
+    <div class="card">
+        <h3 class="section-title">Resumen del Periodo</h3>
+        <div id="summary-content" class="mb-4">
+            <p style="color: var(--text-muted);">Selecciona un rango de fechas para consultar.</p>
+        </div>
+        
+        <h3 class="section-title" style="margin-top: 20px;">Detalle por Días</h3>
+        <div class="table-container">
+            <table id="daily-table">
+                <thead>
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Total</th>
+                        <th>Con Mascarilla</th>
+                        <th>Sin Mascarilla</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td colspan="4" style="text-align: center;">Sin datos</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="card ai-report-card">
+        <h3 class="ai-header">
+            <i class="ph-fill ph-robot"></i> Reporte de Inteligencia Artificial
+        </h3>
+        <div id="ai-report-content" class="ai-report-styling">
+            <p style="color: var(--text-muted);">El reporte generado por IA aparecerá aquí tras realizar la consulta.</p>
+        </div>
+    </div>
+</div>
+
 <div class="grid-2">
     <div class="card">
-        <h3 class="mb-4" style="font-size: 1.125rem; font-weight: 700;">Últimas Detecciones</h3>
+        <h3 class="section-title">Últimas Detecciones</h3>
         <div class="table-container">
             <table id="logs-table">
                 <thead>
@@ -26,7 +79,7 @@
     </div>
 
     <div class="card">
-        <h3 class="mb-4" style="font-size: 1.125rem; font-weight: 700; color: var(--danger);">Historial de Alertas</h3>
+        <h3 class="section-title" style="color: var(--danger-text);">Historial de Alertas</h3>
         <div class="table-container">
             <table id="alerts-table">
                 <thead>
@@ -46,20 +99,87 @@
 {% endblock %}
 
 {% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <script>
+    document.getElementById('date-query-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const start = document.getElementById('fecha_inicio').value;
+        const end = document.getElementById('fecha_fin').value;
+        
+        const summaryContent = document.getElementById('summary-content');
+        const aiReportContent = document.getElementById('ai-report-content');
+        const dailyBody = document.querySelector('#daily-table tbody');
+        
+        summaryContent.innerHTML = '<p style="color: var(--text-muted);">Cargando datos...</p>';
+        aiReportContent.innerHTML = '<p style="color: var(--text-muted);">Generando reporte con IA...</p>';
+        dailyBody.innerHTML = '<tr><td colspan="4" style="text-align: center;">Cargando...</td></tr>';
+        
+        try {
+            const res = await fetch(`/api/logs_by_date?start=${start}&end=${end}`);
+            const data = await res.json();
+            
+            summaryContent.innerHTML = `
+                <div class="summary-cards">
+                    <div class="summary-mini-card">
+                        <div class="mini-label">Total Detecciones</div>
+                        <div class="mini-value">${data.total}</div>
+                    </div>
+                    <div class="summary-mini-card success-tint">
+                        <div class="mini-label">Con Mascarilla</div>
+                        <div class="mini-value">${data.con_mascarilla} <span>(${data.porcentaje_con}%)</span></div>
+                    </div>
+                    <div class="summary-mini-card danger-tint">
+                        <div class="mini-label">Sin Mascarilla</div>
+                        <div class="mini-value">${data.sin_mascarilla} <span>(${data.porcentaje_sin}%)</span></div>
+                    </div>
+                </div>
+            `;
+            
+            dailyBody.innerHTML = '';
+            if (data.detalles && data.detalles.length > 0) {
+                data.detalles.forEach(d => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${d.fecha}</td>
+                        <td>${d.total}</td>
+                        <td style="color: var(--success-text);">${d.con} (${d.pct_con}%)</td>
+                        <td style="color: ${d.sin > 0 ? 'var(--danger-text)' : 'inherit'}; font-weight: ${d.sin > 0 ? '700' : 'normal'}">${d.sin} (${d.pct_sin}%)</td>
+                    `;
+                    dailyBody.appendChild(tr);
+                });
+            } else {
+                dailyBody.innerHTML = '<tr><td colspan="4" style="text-align: center;">No hay datos en este rango</td></tr>';
+            }
+            
+            // Pedir reporte a la IA
+            const aiRes = await fetch('/api/generate_ai_report', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            const aiData = await aiRes.json();
+            
+            if (aiData.report) {
+                aiReportContent.innerHTML = marked.parse(aiData.report);
+            } else {
+                aiReportContent.innerHTML = `<p style="color: var(--danger-text);">Error generando reporte: ${aiData.error || 'Desconocido'}</p>`;
+            }
+            
+        } catch (error) {
+            summaryContent.innerHTML = `<p style="color: var(--danger-text);">Error obteniendo datos.</p>`;
+            aiReportContent.innerHTML = `<p style="color: var(--danger-text);">Error conectando con la IA.</p>`;
+        }
+    });
+
     async function fetchLogs() {
         try {
             const res = await fetch('/api/logs_data');
             const data = await res.json();
             
-            // Llenar tabla de registros
             const logsBody = document.querySelector('#logs-table tbody');
             logsBody.innerHTML = '';
             if (data.logs && data.logs.length > 0) {
                 data.logs.forEach(log => {
-                    // Parse log string: "[2026-07-10 12:34:56] Personas: 5 | Con: 4 | Sin: 1 ⚠️"
-                    // As per logger.py: f"[{row[0]}] Personas: {row[1]} | Con: {row[2]} | Sin: {row[3]}" + (" ⚠️" if row[4] else "")
-                    
                     const logStr = log.toString();
                     const timestampMatch = logStr.match(/\[(.*?)\]/);
                     const timestamp = timestampMatch ? timestampMatch[1] : '--';
@@ -75,7 +195,7 @@
                         <td>${timestamp}</td>
                         <td>${personasMatch ? personasMatch[1] : 0}</td>
                         <td>${conMatch ? conMatch[1] : 0}</td>
-                        <td style="color: ${sinMatch && parseInt(sinMatch[1]) > 0 ? 'var(--danger)' : 'inherit'}; font-weight: ${sinMatch && parseInt(sinMatch[1]) > 0 ? '700' : 'normal'}">${sinMatch ? sinMatch[1] : 0}</td>
+                        <td style="color: ${sinMatch && parseInt(sinMatch[1]) > 0 ? 'var(--danger-text)' : 'inherit'}; font-weight: ${sinMatch && parseInt(sinMatch[1]) > 0 ? '700' : 'normal'}">${sinMatch ? sinMatch[1] : 0}</td>
                         <td>
                             ${hasAlert ? '<span class="badge danger">Alerta</span>' : '<span class="badge success">OK</span>'}
                         </td>
@@ -86,7 +206,6 @@
                 logsBody.innerHTML = '<tr><td colspan="5" style="text-align: center;">No hay registros disponibles.</td></tr>';
             }
 
-            // Llenar tabla de alertas
             const alertsBody = document.querySelector('#alerts-table tbody');
             alertsBody.innerHTML = '';
             if (data.alerts && data.alerts.length > 0) {
@@ -94,7 +213,7 @@
                     const tr = document.createElement('tr');
                     tr.innerHTML = `
                         <td>${alert.timestamp}</td>
-                        <td style="font-weight: 700; color: var(--danger);">${alert.sin_mascarilla}</td>
+                        <td style="font-weight: 700; color: var(--danger-text);">${alert.sin_mascarilla}</td>
                         <td><span class="badge danger">Infracción</span></td>
                     `;
                     alertsBody.appendChild(tr);
@@ -108,7 +227,6 @@
         }
     }
 
-    // Actualizar logs cada 5 segundos
     fetchLogs();
     setInterval(fetchLogs, 5000);
 </script>

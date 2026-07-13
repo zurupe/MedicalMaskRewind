@@ -2,9 +2,10 @@ import os
 import threading
 import time
 import cv2
-from flask import Flask, jsonify, render_template, Response
+from flask import Flask, jsonify, render_template, Response, request
 from detector_mascarillas import DetectorMascarillas
 from logger import BioseguridadLogger
+import groq
 
 app = Flask(__name__)
 
@@ -143,6 +144,56 @@ def api_logs_data():
         logs_list = logger.leer_registros(limit=50)
         alerts_list = logger.obtener_alertas(limit=50)
     return jsonify({"logs": logs_list, "alerts": alerts_list})
+
+
+@app.route('/api/logs_by_date')
+def api_logs_by_date():
+    start = request.args.get('start')
+    end = request.args.get('end')
+    if not start or not end:
+        return jsonify({"error": "Fechas requeridas"}), 400
+    
+    resumen = logger.obtener_resumen_por_fechas(start, end)
+    return jsonify(resumen)
+
+
+@app.route('/api/generate_ai_report', methods=['POST'])
+def generate_ai_report():
+    data = request.json
+    try:
+        with open("groq_key.txt", "r") as f:
+            api_key = f.read().strip()
+    except FileNotFoundError:
+        return jsonify({"error": "Falta el archivo groq_key.txt con la clave de API"}), 500
+        client = groq.Groq(api_key=api_key)
+        prompt = f"""
+        Eres un asistente de IA experto en seguridad industrial y bioseguridad.
+        A continuación se presentan los datos de detecciones de uso de mascarillas en un periodo de tiempo.
+        IMPORTANTE: Ten en cuenta que los números representan "detecciones" de un modelo de visión, NO personas únicas.
+        Genera un reporte corto y profesional (máximo 3 párrafos cortos) en formato Markdown interpretando los datos, 
+        dando una conclusión y sugiriendo si se deben tomar medidas.
+        
+        Datos del periodo: {data.get('rango')}
+        Total de detecciones analizadas: {data.get('total')}
+        Detecciones CON mascarilla: {data.get('con_mascarilla')} ({data.get('porcentaje_con')}%)
+        Detecciones SIN mascarilla: {data.get('sin_mascarilla')} ({data.get('porcentaje_sin')}%)
+        
+        Detalles por día: {data.get('detalles')}
+        """
+        
+        chat_completion = client.chat.completions.create(
+            messages=[
+                {
+                    "role": "user",
+                    "content": prompt,
+                }
+            ],
+            model="llama-3.1-8b-instant",
+        )
+        reporte = chat_completion.choices[0].message.content
+        return jsonify({"report": reporte})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 @app.route('/api/state')

@@ -4,27 +4,50 @@
 {% block page_title %}Métricas y Estadísticas Diarias{% endblock %}
 
 {% block content %}
+<!-- Alerta de infracción en tiempo real -->
+<div class="alert-banner" id="live-alert">
+    <i class="ph ph-warning-circle" style="font-size: 1.25rem;"></i>
+    <span id="live-alert-text">Alerta: Se detectó persona sin mascarilla en cámara</span>
+</div>
+
+<h3 class="section-title muted">En Tiempo Real</h3>
+<div class="grid-3 mb-4">
+    <div class="card">
+        <div class="card-title">Detecciones (En Pantalla)</div>
+        <div class="card-value" id="current_total">0</div>
+    </div>
+    <div class="card">
+        <div class="card-title">Con Mascarilla</div>
+        <div class="card-value success" id="current_con">0</div>
+    </div>
+    <div class="card">
+        <div class="card-title">Sin Mascarilla</div>
+        <div class="card-value danger" id="current_sin">0</div>
+    </div>
+</div>
+
+<h3 class="section-title muted">Acumulado del Día</h3>
 <div class="grid-3 mb-4">
     <div class="card">
         <div class="card-title">Total Detectado Hoy</div>
         <div class="card-value" id="daily_total">0</div>
-        <div class="metric-footer">Personas analizadas</div>
+        <div class="metric-footer">Detecciones analizadas</div>
     </div>
     <div class="card">
         <div class="card-title">Cumplimiento (Con Mascarilla)</div>
         <div class="card-value success" id="daily_con">0</div>
-        <div class="metric-footer">Personas</div>
+        <div class="metric-footer">Detecciones</div>
     </div>
     <div class="card">
         <div class="card-title">Incumplimiento (Sin Mascarilla)</div>
         <div class="card-value danger" id="daily_sin">0</div>
-        <div class="metric-footer">Personas</div>
+        <div class="metric-footer">Detecciones</div>
     </div>
 </div>
 
 <div class="grid-2">
     <div class="card">
-        <h3 class="mb-4" style="font-size: 1.125rem; font-weight: 700;">Distribución de Cumplimiento</h3>
+        <h3 class="section-title">Distribución de Cumplimiento</h3>
         
         <div class="metric-item">
             <div class="metric-header">
@@ -46,7 +69,7 @@
             </div>
         </div>
         
-        <div class="mt-4 text-secondary" style="font-size: 0.875rem;">
+        <div class="mt-4 text-secondary" style="font-size: 0.8rem;">
             Última actualización: <span id="last_update">--</span>
         </div>
     </div>
@@ -68,6 +91,19 @@
     window.addEventListener('appStateUpdated', (e) => {
         const data = e.detail;
         
+        // Tiempo real
+        document.getElementById('current_total').textContent = data.total || 0;
+        document.getElementById('current_con').textContent = data.con_mascarilla || 0;
+        document.getElementById('current_sin').textContent = data.sin_mascarilla || 0;
+        
+        const alertBanner = document.getElementById('live-alert');
+        if (data.alerta) {
+            alertBanner.classList.add('active');
+        } else {
+            alertBanner.classList.remove('active');
+        }
+
+        // Diario
         document.getElementById('daily_total').textContent = data.daily_total;
         document.getElementById('daily_con').textContent = data.daily_con;
         document.getElementById('daily_sin').textContent = data.daily_sin;
