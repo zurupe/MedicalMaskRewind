@@ -158,6 +158,44 @@ class BioseguridadLogger:
         conn.close()
         return [{"timestamp": row[0], "sin_mascarilla": row[1]} for row in rows]
 
+    def consultar_por_fechas(self, start_date, end_date):
+        try:
+            datetime.strptime(start_date, "%Y-%m-%d")
+            datetime.strptime(end_date, "%Y-%m-%d")
+            start_timestamp = f"{start_date} 00:00:00"
+            end_timestamp = f"{end_date} 23:59:59"
+
+            conn = sqlite3.connect(self.db_path)
+            conn.row_factory = sqlite3.Row
+            cursor = conn.execute(
+                """
+                SELECT timestamp, total, con_mascarilla, sin_mascarilla,
+                       porcentaje_con, porcentaje_sin, alerta
+                FROM detecciones
+                WHERE timestamp BETWEEN ? AND ?
+                ORDER BY timestamp ASC
+                """,
+                (start_timestamp, end_timestamp),
+            )
+            rows = cursor.fetchall()
+            conn.close()
+
+            return [
+                {
+                    "timestamp": row["timestamp"],
+                    "total": row["total"],
+                    "con_mascarilla": row["con_mascarilla"],
+                    "sin_mascarilla": row["sin_mascarilla"],
+                    "porcentaje_con": row["porcentaje_con"],
+                    "porcentaje_sin": row["porcentaje_sin"],
+                    "alerta": bool(row["alerta"]),
+                }
+                for row in rows
+            ]
+        except Exception as exc:
+            print(f"Error al consultar historial por fechas: {exc}")
+            return []
+
     def obtener_resumen_diario(self):
         conn = sqlite3.connect(self.db_path)
         today = datetime.now().strftime("%Y-%m-%d")

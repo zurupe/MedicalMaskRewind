@@ -2,7 +2,7 @@ import os
 import threading
 import time
 import cv2
-from flask import Flask, jsonify, render_template, Response
+from flask import Flask, jsonify, render_template, request, Response
 from detector_mascarillas import DetectorMascarillas
 from logger import BioseguridadLogger
 
@@ -28,6 +28,8 @@ STATE = {
     "daily_pct_sin": 0.0,
     "recommendation_title": "Esperando datos",
     "recommendation_text": "Aún no hay suficiente información diaria para una recomendación.",
+    "risk_level": "Sin datos",
+    "risk_description": "Todavía no hay detecciones suficientes para estimar el nivel de riesgo.",
 }
 
 
@@ -37,10 +39,53 @@ stop_event = threading.Event()
 logger = BioseguridadLogger()
 
 
-def generar_recomendacion(daily_metrics):
+def calcular_nivel_riesgo(metrics, daily_metrics):
+    total = metrics.get("total", 0)
+    sin_mascarilla = metrics.get("sin_mascarilla", 0)
+    daily_total = daily_metrics.get("total", 0)
+    daily_pct_con = daily_metrics.get("porcentaje_con", 0.0)
+
+    if total == 0 and daily_total == 0:
+        return {
+            "level": "Sin datos",
+            "description": "Todavía no hay personas detectadas para estimar el nivel de riesgo.",
+        }
+
+    if daily_total > 0 and daily_pct_con < 70:
+        return {
+            "level": "Riesgo crítico",
+            "description": "El cumplimiento diario está por debajo del 70%. Se recomienda reforzar controles de ingreso y recordatorios de uso de mascarilla.",
+        }
+
+    if total == 0:
+        return {
+            "level": "Sin datos",
+            "description": "No hay personas en la última lectura. El sistema mantiene las métricas diarias registradas.",
+        }
+
+    if sin_mascarilla == 0:
+        return {
+            "level": "Riesgo bajo",
+            "description": "No se detectaron personas sin mascarilla en la última lectura.",
+        }
+
+    if sin_mascarilla == 1:
+        return {
+            "level": "Riesgo moderado",
+            "description": "Se detectó una persona sin mascarilla. Se recomienda solicitar el uso correcto antes del ingreso.",
+        }
+
+    return {
+        "level": "Riesgo alto",
+        "description": "Se detectaron varias personas sin mascarilla. Se recomienda reforzar el control de ingreso.",
+    }
+
+
+def generar_recomendacion(daily_metrics, metrics=None):
     pct_con = daily_metrics.get("porcentaje_con", 0.0)
     pct_sin = daily_metrics.get("porcentaje_sin", 0.0)
     total = daily_metrics.get("total", 0)
+    sin_actual = (metrics or {}).get("sin_mascarilla", 0)
 
     if total == 0:
         return {
@@ -50,32 +95,33 @@ def generar_recomendacion(daily_metrics):
 
     if pct_con < 70:
         return {
-            "title": "Incrementar controles de seguridad",
-            "text": f"El cumplimiento diario de mascarilla está en {pct_con:.1f}%. Se recomienda reforzar los recordatorios, supervisión y controles de acceso para mejorar la adopción.",
+            "title": "Riesgo crítico",
+            "text": f"El cumplimiento diario está en {pct_con:.1f}% ({daily_metrics.get('con_mascarilla', 0)} de {total} detecciones con mascarilla). Se recomienda aplicar controles más estrictos y reforzar los recordatorios de bioseguridad.",
         }
 
-    if pct_con >= 85 and pct_sin > 0:
+    if sin_actual > 0:
         return {
-            "title": "Analizar el porcentaje restante",
-            "text": f"El cumplimiento diario es alto ({pct_con:.1f}%), pero aún existe un porcentaje de personas sin mascarilla ({pct_sin:.1f}%). Conviene revisar las causas del resto para ajustar la comunicación y la vigilancia.",
+            "title": "Reforzar control",
+            "text": f"Se detectaron personas sin mascarilla en la última lectura. El cumplimiento diario es {pct_con:.1f}% y el incumplimiento acumulado es {pct_sin:.1f}%; se recomienda solicitar el uso correcto antes del ingreso.",
         }
 
     if pct_sin >= 15:
         return {
             "title": "Reforzar la comunicación de bioseguridad",
-            "text": f"Se detecta un nivel significativo de incumplimiento ({pct_sin:.1f}%). Es recomendable reforzar mensajes, recordatorios y supervisión en la entrada.",
+            "text": f"El incumplimiento diario acumulado es {pct_sin:.1f}%. Se recomienda reforzar mensajes visibles y supervisión en la entrada.",
         }
 
     return {
-        "title": "Cumplimiento estable",
-        "text": f"El cumplimiento diario se mantiene en un nivel saludable ({pct_con:.1f}%). Se recomienda mantener la vigilancia y revisar solo los casos aislados que aún incumplen.",
+        "title": "Cumplimiento adecuado",
+        "text": f"No se detectan personas sin mascarilla en la última lectura. El cumplimiento diario se mantiene en {pct_con:.1f}% con {daily_metrics.get('con_mascarilla', 0)} detecciones correctas.",
     }
 
 
 def actualizar_estado(frame, metrics):
     global detector
     daily_metrics = logger.obtener_resumen_diario()
-    recommendation = generar_recomendacion(daily_metrics)
+    recommendation = generar_recomendacion(daily_metrics, metrics)
+    risk = calcular_nivel_riesgo(metrics, daily_metrics)
 
     STATE.update({
         "last_update": metrics.get("timestamp", ""),
@@ -95,6 +141,8 @@ def actualizar_estado(frame, metrics):
         "daily_pct_sin": daily_metrics.get("porcentaje_sin", 0.0),
         "recommendation_title": recommendation["title"],
         "recommendation_text": recommendation["text"],
+        "risk_level": risk["level"],
+        "risk_description": risk["description"],
     })
 
     if detector is not None:
@@ -128,6 +176,17 @@ def index():
 def api_state():
     payload = {key: value for key, value in STATE.items() if key != 'latest_frame'}
     return jsonify(payload)
+
+
+@app.route('/api/history')
+def api_history():
+    start = request.args.get('start', '').strip()
+    end = request.args.get('end', '').strip()
+
+    if not start or not end:
+        return jsonify({"error": "Debe enviar fecha inicial y fecha final."}), 400
+
+    return jsonify(logger.consultar_por_fechas(start, end))
 
 
 @app.route('/api/health')
