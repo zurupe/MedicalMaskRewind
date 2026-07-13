@@ -6,6 +6,9 @@ from flask import Flask, jsonify, render_template, Response, request
 from detector_mascarillas import DetectorMascarillas
 from logger import BioseguridadLogger
 import groq
+from dotenv import load_dotenv
+
+load_dotenv()
 
 app = Flask(__name__)
 
@@ -161,10 +164,10 @@ def api_logs_by_date():
 def generate_ai_report():
     data = request.json
     try:
-        with open("groq_key.txt", "r") as f:
-            api_key = f.read().strip()
-    except FileNotFoundError:
-        return jsonify({"error": "Falta el archivo groq_key.txt con la clave de API"}), 500
+        api_key = os.getenv("GROQ_API_KEY")
+        if not api_key:
+             return jsonify({"error": "No se encontró la variable de entorno GROQ_API_KEY. Verifica tu archivo .env"}), 500
+
         client = groq.Groq(api_key=api_key)
         prompt = f"""
         Eres un asistente de IA experto en seguridad industrial y bioseguridad.
