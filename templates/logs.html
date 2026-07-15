@@ -19,7 +19,16 @@
             <i class="ph ph-magnifying-glass"></i>
             Consultar e Interpretar con IA
         </button>
+        <button type="button" id="export-pdf-btn" class="btn-primary" style="background: linear-gradient(135deg, var(--warning), #f59e0b);">
+            <i class="ph ph-file-pdf"></i>
+            Generar PDF del Informe
+        </button>
     </form>
+</div>
+
+<div id="pdf-preview-container" class="card mb-4" style="display: none;">
+    <h3 class="section-title">Vista previa del PDF</h3>
+    <iframe id="pdf-preview-frame" style="width: 100%; height: 600px; border: 1px solid var(--panel-border); border-radius: var(--radius-sm); background: white;"></iframe>
 </div>
 
 <div class="grid-2 mb-4">
@@ -101,6 +110,9 @@
 {% block scripts %}
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <script>
+    let lastReportData = null;
+    let lastReportText = '';
+
     document.getElementById('date-query-form').addEventListener('submit', async (e) => {
         e.preventDefault();
         const start = document.getElementById('fecha_inicio').value;
@@ -160,6 +172,8 @@
             const aiData = await aiRes.json();
             
             if (aiData.report) {
+                lastReportText = aiData.report;
+                lastReportData = { ...data, report: aiData.report };
                 aiReportContent.innerHTML = marked.parse(aiData.report);
             } else {
                 aiReportContent.innerHTML = `<p style="color: var(--danger-text);">Error generando reporte: ${aiData.error || 'Desconocido'}</p>`;
@@ -226,6 +240,43 @@
             console.error("Error fetching logs:", e);
         }
     }
+
+    document.getElementById('export-pdf-btn').addEventListener('click', async () => {
+        if (!lastReportData) {
+            alert('Primero genera un informe de IA para el rango seleccionado.');
+            return;
+        }
+
+        const previewFrame = document.getElementById('pdf-preview-frame');
+        const previewContainer = document.getElementById('pdf-preview-container');
+        if (previewContainer) {
+            previewContainer.style.display = 'block';
+            previewFrame.src = 'about:blank';
+        }
+
+        try {
+            const res = await fetch('/api/export_report_pdf', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(lastReportData)
+            });
+            const data = await res.json();
+            if (data.pdf_url) {
+                if (previewFrame) {
+                    previewFrame.src = data.pdf_url;
+                } else {
+                    const link = document.createElement('a');
+                    link.href = data.pdf_url;
+                    link.download = 'reporte_bioseguridad.pdf';
+                    link.click();
+                }
+            } else {
+                alert(data.error || 'No se pudo generar el PDF.');
+            }
+        } catch (error) {
+            alert('Error al generar el PDF.');
+        }
+    });
 
     fetchLogs();
     setInterval(fetchLogs, 5000);

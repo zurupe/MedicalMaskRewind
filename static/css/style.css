@@ -349,6 +349,21 @@ body {
 }
 
 /* ===========================
+   CHARTS
+   =========================== */
+.chart-shell {
+  position: relative;
+  height: 240px;
+  margin-top: 8px;
+}
+
+.chart-caption {
+  font-size: 0.8rem;
+  line-height: 1.6;
+  color: var(--text-muted);
+}
+
+/* ===========================
    RECOMMENDATION BOX
    =========================== */
 .recommendation-box {

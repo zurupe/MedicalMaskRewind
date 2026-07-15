@@ -13,25 +13,33 @@
 <h3 class="section-title muted">En Tiempo Real</h3>
 <div class="grid-3 mb-4">
     <div class="card">
-        <div class="card-title">Detecciones (En Pantalla)</div>
+        <div class="card-title">Detecciones Actuales</div>
         <div class="card-value" id="current_total">0</div>
+        <div class="metric-footer">Número de entidades activas en este momento</div>
     </div>
     <div class="card">
         <div class="card-title">Con Mascarilla</div>
         <div class="card-value success" id="current_con">0</div>
+        <div class="metric-footer">Personas rastreadas con cumplimiento</div>
     </div>
     <div class="card">
         <div class="card-title">Sin Mascarilla</div>
         <div class="card-value danger" id="current_sin">0</div>
+        <div class="metric-footer">Personas rastreadas sin cumplimiento</div>
     </div>
 </div>
 
 <h3 class="section-title muted">Acumulado del Día</h3>
-<div class="grid-3 mb-4">
+<div class="grid-4 mb-4">
     <div class="card">
-        <div class="card-title">Total Detectado Hoy</div>
-        <div class="card-value" id="daily_total">0</div>
-        <div class="metric-footer">Detecciones analizadas</div>
+        <div class="card-title">Detecciones del Modelo</div>
+        <div class="card-value" id="daily_detecciones_modelo">0</div>
+        <div class="metric-footer">Eventos detectados por el modelo en cada cuadro</div>
+    </div>
+    <div class="card">
+        <div class="card-title">Personas Reales Rastreadas</div>
+        <div class="card-value" id="daily_personas_reales">0</div>
+        <div class="metric-footer">Personas reales estimadas por el seguimiento</div>
     </div>
     <div class="card">
         <div class="card-title">Cumplimiento (Con Mascarilla)</div>
@@ -48,8 +56,12 @@
 <div class="grid-2">
     <div class="card">
         <h3 class="section-title">Distribución de Cumplimiento</h3>
-        
-        <div class="metric-item">
+
+        <div class="chart-shell">
+            <canvas id="complianceChart"></canvas>
+        </div>
+
+        <div class="metric-item mt-3">
             <div class="metric-header">
                 <span>Con Mascarilla</span>
                 <span class="metric-value text-success" id="daily_pct_con">0.0%</span>
@@ -72,6 +84,9 @@
         <div class="mt-4 text-secondary" style="font-size: 0.8rem;">
             Última actualización: <span id="last_update">--</span>
         </div>
+        <div class="chart-caption mt-3">
+            El pastel muestra la proporción de detecciones con y sin mascarilla. La cifra de personas reales puede ser menor porque el rastreo agrupa repeticiones del mismo individuo.
+        </div>
     </div>
 
     <div>
@@ -87,7 +102,62 @@
 {% endblock %}
 
 {% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
+    let complianceChart = null;
+
+    function initComplianceChart() {
+        const ctx = document.getElementById('complianceChart');
+        if (!ctx) return;
+
+        complianceChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Con mascarilla', 'Sin mascarilla'],
+                datasets: [{
+                    data: [0, 0],
+                    backgroundColor: ['#34d399', '#f87171'],
+                    borderColor: ['#0b0f19', '#0b0f19'],
+                    borderWidth: 2,
+                    hoverOffset: 6,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            color: '#f1f5f9',
+                            padding: 16,
+                            usePointStyle: true,
+                            pointStyle: 'circle'
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: (context) => {
+                                const value = context.raw || 0;
+                                const total = context.chart.data.datasets[0].data.reduce((sum, item) => sum + (item || 0), 0);
+                                const pct = total > 0 ? (value / total * 100) : 0;
+                                return `${context.label}: ${value} detecciones (${pct.toFixed(1)}%)`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    function updateComplianceChart(con, sin) {
+        if (!complianceChart) return;
+        const total = Number(con || 0) + Number(sin || 0);
+        const values = total > 0 ? [Number(con || 0), Number(sin || 0)] : [0, 0];
+        complianceChart.data.datasets[0].data = values;
+        complianceChart.update();
+    }
+
     window.addEventListener('appStateUpdated', (e) => {
         const data = e.detail;
         
@@ -105,6 +175,8 @@
 
         // Diario
         document.getElementById('daily_total').textContent = data.daily_total;
+        document.getElementById('daily_detecciones_modelo').textContent = data.daily_detecciones_modelo || 0;
+        document.getElementById('daily_personas_reales').textContent = data.daily_personas_reales || 0;
         document.getElementById('daily_con').textContent = data.daily_con;
         document.getElementById('daily_sin').textContent = data.daily_sin;
         
@@ -118,6 +190,10 @@
         
         document.getElementById('recommendation_title').innerHTML = `<i class="ph-fill ph-lightbulb"></i> ${data.recommendation_title || 'Esperando datos'}`;
         document.getElementById('recommendation_text').textContent = data.recommendation_text || 'Aún no hay suficiente información diaria para una recomendación.';
+
+        updateComplianceChart(data.daily_con || 0, data.daily_sin || 0);
     });
+
+    initComplianceChart();
 </script>
 {% endblock %}

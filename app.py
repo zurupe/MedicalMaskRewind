@@ -1,3 +1,5 @@
+import base64
+import io
 import os
 import threading
 import time
@@ -30,6 +32,8 @@ STATE = {
     "daily_sin": 0,
     "daily_pct_con": 0.0,
     "daily_pct_sin": 0.0,
+    "daily_detecciones_modelo": 0,
+    "daily_personas_reales": 0,
     "recommendation_title": "Esperando datos",
     "recommendation_text": "Aún no hay suficiente información diaria para una recomendación.",
 }
@@ -78,6 +82,13 @@ def generar_recomendacion(daily_metrics):
 
 def actualizar_estado(frame, metrics):
     global detector
+    # Manejar señales de error enviadas por el detector
+    if isinstance(metrics, dict) and metrics.get('error'):
+        err = metrics.get('error')
+        STATE['camera_status'] = err
+        STATE['video_ready'] = False
+        return
+
     daily_metrics = logger.obtener_resumen_diario()
     recommendation = generar_recomendacion(daily_metrics)
 
@@ -97,6 +108,8 @@ def actualizar_estado(frame, metrics):
         "daily_sin": daily_metrics.get("sin_mascarilla", 0),
         "daily_pct_con": daily_metrics.get("porcentaje_con", 0.0),
         "daily_pct_sin": daily_metrics.get("porcentaje_sin", 0.0),
+        "daily_detecciones_modelo": daily_metrics.get("detecciones_modelo", 0),
+        "daily_personas_reales": daily_metrics.get("personas_reales", 0),
         "recommendation_title": recommendation["title"],
         "recommendation_text": recommendation["text"],
     })
@@ -118,7 +131,11 @@ def background_loop():
     global detector
     try:
         detector = DetectorMascarillas(callback=actualizar_estado)
-        detector.analizar_webcam(mostrar_ventana=False, stop_event=stop_event)
+        result = detector.analizar_webcam(mostrar_ventana=False, stop_event=stop_event)
+        if result is False:
+            STATE['camera_status'] = 'camera_error'
+            STATE['video_ready'] = False
+            print('Background detection stopped: camera not available.')
     except Exception as exc:
         STATE['camera_status'] = f'error: {exc}'
 
@@ -172,7 +189,7 @@ def generate_ai_report():
         prompt = f"""
         Eres un asistente de IA experto en seguridad industrial y bioseguridad.
         A continuación se presentan los datos de detecciones de uso de mascarillas en un periodo de tiempo.
-        IMPORTANTE: Ten en cuenta que los números representan "detecciones" de un modelo de visión, NO personas únicas.
+        IMPORTANTE: Ten en cuenta que los números representan "detecciones" del modelo de visión; los valores de "personas reales rastreadas" son una estimación del seguimiento y pueden diferir de las detecciones por cuadro.
         Genera un reporte corto y profesional (máximo 3 párrafos cortos) en formato Markdown interpretando los datos, 
         dando una conclusión y sugiriendo si se deben tomar medidas.
         
@@ -180,6 +197,8 @@ def generate_ai_report():
         Total de detecciones analizadas: {data.get('total')}
         Detecciones CON mascarilla: {data.get('con_mascarilla')} ({data.get('porcentaje_con')}%)
         Detecciones SIN mascarilla: {data.get('sin_mascarilla')} ({data.get('porcentaje_sin')}%)
+        Detecciones del modelo (por cuadro): {data.get('detecciones_modelo')}
+        Personas reales rastreadas: {data.get('personas_reales')}
         
         Detalles por día: {data.get('detalles')}
         """
@@ -203,6 +222,78 @@ def generate_ai_report():
 def api_state():
     payload = {key: value for key, value in STATE.items() if key != 'latest_frame'}
     return jsonify(payload)
+
+
+@app.route('/api/export_report_pdf', methods=['POST'])
+def export_report_pdf():
+    data = request.json or {}
+    try:
+        from reportlab.lib.pagesizes import letter
+        from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+        from reportlab.lib.styles import getSampleStyleSheet
+        from reportlab.lib import colors
+
+        buffer = io.BytesIO()
+        doc = SimpleDocTemplate(buffer, pagesize=letter, rightMargin=36, leftMargin=36, topMargin=36, bottomMargin=36)
+        styles = getSampleStyleSheet()
+        story = []
+        story.append(Paragraph('Reporte de Bioseguridad', styles['Title']))
+        story.append(Paragraph('Monitoreo de cumplimiento de mascarillas', styles['Heading2']))
+        story.append(Spacer(1, 10))
+        story.append(Paragraph(f"Periodo analizado: {data.get('rango', 'N/D')}", styles['BodyText']))
+        story.append(Spacer(1, 8))
+
+        metrics = [
+            ['Indicador', 'Valor'],
+            ['Detecciones del modelo', str(data.get('detecciones_modelo', 0))],
+            ['Personas reales rastreadas', str(data.get('personas_reales', 0))],
+            ['Con mascarilla', f"{data.get('con_mascarilla', 0)} ({data.get('porcentaje_con', 0)}%)"],
+            ['Sin mascarilla', f"{data.get('sin_mascarilla', 0)} ({data.get('porcentaje_sin', 0)}%)"],
+        ]
+        table = Table(metrics, repeatRows=1, colWidths=[220, 180])
+        table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#2563eb')),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#cbd5e1')),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+            ('PADDING', (0, 0), (-1, -1), 6),
+        ]))
+        story.append(table)
+        story.append(Spacer(1, 14))
+        story.append(Paragraph('Observaciones del informe', styles['Heading3']))
+        report_text = data.get('report', 'Sin observaciones adicionales.')
+
+        # Convert simple Markdown (bold, paragraphs, line breaks) to ReportLab-friendly HTML
+        import re
+        def md_to_paragraphs(md_text, style):
+            blocks = re.split(r"\n\s*\n", md_text.strip())
+            paras = []
+            for b in blocks:
+                t = b.strip()
+                if not t:
+                    continue
+                # Replace bold **text** with <b>text</b>
+                t = re.sub(r"\*\*(.+?)\*\*", r"<b>\1</b>", t)
+                # Replace inline italics *text* with <i>text</i>
+                t = re.sub(r"\*(.+?)\*", r"<i>\1</i>", t)
+                # Preserve single newlines as <br/>
+                t = t.replace('\n', '<br/>')
+                paras.append(Paragraph(t, style))
+            return paras
+
+        for p in md_to_paragraphs(report_text, styles['BodyText']):
+            story.append(p)
+            story.append(Spacer(1, 6))
+
+        story.append(Spacer(1, 8))
+        story.append(Paragraph('Nota: los valores de detecciones corresponden al modelo de visión, mientras que las personas reales rastreadas representan entidades únicas mantenidas por el seguimiento.', styles['Italic']))
+        doc.build(story)
+        pdf_bytes = buffer.getvalue()
+        buffer.close()
+        return jsonify({"pdf_url": "data:application/pdf;base64," + base64.b64encode(pdf_bytes).decode('ascii')})
+    except Exception as exc:
+        return jsonify({"error": str(exc)}), 500
 
 
 @app.route('/api/health')

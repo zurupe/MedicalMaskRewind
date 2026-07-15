@@ -1,35 +1,36 @@
 ============================================================
- REPORTE DE BIOSEGURIDAD - INICIADO: 2026-07-13 12:17:09
+ REPORTE DE BIOSEGURIDAD - INICIADO: 2026-07-14 19:27:19
 ============================================================
 
-[2026-07-13 12:17:20] Personas en escena: 1 | Con Mascarilla: 1 | Sin Mascarilla: 0
-[2026-07-13 12:17:21] Personas en escena: 1 | Con Mascarilla: 0 | Sin Mascarilla: 1 ⚠️ ALERTA: Incumplimiento detectado
-[2026-07-13 12:17:25] Personas en escena: 1 | Con Mascarilla: 0 | Sin Mascarilla: 1 ⚠️ ALERTA: Incumplimiento detectado
-[2026-07-13 12:17:26] Personas en escena: 1 | Con Mascarilla: 0 | Sin Mascarilla: 1 ⚠️ ALERTA: Incumplimiento detectado
-[2026-07-13 12:17:27] Personas en escena: 1 | Con Mascarilla: 0 | Sin Mascarilla: 1 ⚠️ ALERTA: Incumplimiento detectado
-[2026-07-13 12:17:28] Personas en escena: 1 | Con Mascarilla: 0 | Sin Mascarilla: 1 ⚠️ ALERTA: Incumplimiento detectado
-[2026-07-13 12:17:29] Personas en escena: 1 | Con Mascarilla: 0 | Sin Mascarilla: 1 ⚠️ ALERTA: Incumplimiento detectado
-[2026-07-13 12:17:30] Personas en escena: 1 | Con Mascarilla: 0 | Sin Mascarilla: 1 ⚠️ ALERTA: Incumplimiento detectado
-[2026-07-13 12:17:31] Personas en escena: 1 | Con Mascarilla: 0 | Sin Mascarilla: 1 ⚠️ ALERTA: Incumplimiento detectado
-[2026-07-13 12:17:32] Personas en escena: 1 | Con Mascarilla: 0 | Sin Mascarilla: 1 ⚠️ ALERTA: Incumplimiento detectado
-[2026-07-13 12:17:33] Personas en escena: 1 | Con Mascarilla: 0 | Sin Mascarilla: 1 ⚠️ ALERTA: Incumplimiento detectado
-[2026-07-13 12:17:34] Personas en escena: 1 | Con Mascarilla: 0 | Sin Mascarilla: 1 ⚠️ ALERTA: Incumplimiento detectado
-[2026-07-13 12:17:35] Personas en escena: 1 | Con Mascarilla: 1 | Sin Mascarilla: 0
-[2026-07-13 12:17:36] Personas en escena: 1 | Con Mascarilla: 1 | Sin Mascarilla: 0
-[2026-07-13 12:17:37] Personas en escena: 1 | Con Mascarilla: 1 | Sin Mascarilla: 0
-[2026-07-13 12:17:38] Personas en escena: 1 | Con Mascarilla: 1 | Sin Mascarilla: 0
-[2026-07-13 12:17:39] Personas en escena: 1 | Con Mascarilla: 1 | Sin Mascarilla: 0
-[2026-07-13 12:17:40] Personas en escena: 1 | Con Mascarilla: 0 | Sin Mascarilla: 1 ⚠️ ALERTA: Incumplimiento detectado
-[2026-07-13 12:17:41] Personas en escena: 1 | Con Mascarilla: 0 | Sin Mascarilla: 1 ⚠️ ALERTA: Incumplimiento detectado
-[2026-07-13 12:17:42] Personas en escena: 1 | Con Mascarilla: 0 | Sin Mascarilla: 1 ⚠️ ALERTA: Incumplimiento detectado
-[2026-07-13 12:17:43] Personas en escena: 1 | Con Mascarilla: 0 | Sin Mascarilla: 1 ⚠️ ALERTA: Incumplimiento detectado
-[2026-07-13 12:17:44] Personas en escena: 1 | Con Mascarilla: 0 | Sin Mascarilla: 1 ⚠️ ALERTA: Incumplimiento detectado
-[2026-07-13 12:17:45] Personas en escena: 1 | Con Mascarilla: 0 | Sin Mascarilla: 1 ⚠️ ALERTA: Incumplimiento detectado
-[2026-07-13 12:17:46] Personas en escena: 1 | Con Mascarilla: 0 | Sin Mascarilla: 1 ⚠️ ALERTA: Incumplimiento detectado
-[2026-07-13 12:17:47] Personas en escena: 1 | Con Mascarilla: 0 | Sin Mascarilla: 1 ⚠️ ALERTA: Incumplimiento detectado
-[2026-07-13 12:17:53] Personas en escena: 1 | Con Mascarilla: 0 | Sin Mascarilla: 1 ⚠️ ALERTA: Incumplimiento detectado
-[2026-07-13 12:17:54] Personas en escena: 2 | Con Mascarilla: 1 | Sin Mascarilla: 1 ⚠️ ALERTA: Incumplimiento detectado
-[2026-07-13 12:17:55] Personas en escena: 1 | Con Mascarilla: 1 | Sin Mascarilla: 0
-[2026-07-13 12:17:56] Personas en escena: 1 | Con Mascarilla: 1 | Sin Mascarilla: 0
-[2026-07-13 12:17:57] Personas en escena: 1 | Con Mascarilla: 1 | Sin Mascarilla: 0
-[2026-07-13 12:17:58] Personas en escena: 1 | Con Mascarilla: 1 | Sin Mascarilla: 0
+[2026-07-14 19:27:24] Personas en escena: 1 | Con Mascarilla: 0 | Sin Mascarilla: 1 | Detecciones modelo: 1 | Personas reales rastreadas: 1 ⚠️ ALERTA: Incumplimiento detectado
+[2026-07-14 19:27:25] Personas en escena: 2 | Con Mascarilla: 1 | Sin Mascarilla: 1 | Detecciones modelo: 2 | Personas reales rastreadas: 2 ⚠️ ALERTA: Incumplimiento detectado
+[2026-07-14 19:27:26] Personas en escena: 2 | Con Mascarilla: 1 | Sin Mascarilla: 1 | Detecciones modelo: 2 | Personas reales rastreadas: 2 ⚠️ ALERTA: Incumplimiento detectado
+[2026-07-14 19:27:27] Personas en escena: 2 | Con Mascarilla: 1 | Sin Mascarilla: 1 | Detecciones modelo: 2 | Personas reales rastreadas: 2 ⚠️ ALERTA: Incumplimiento detectado
+[2026-07-14 19:27:28] Personas en escena: 2 | Con Mascarilla: 1 | Sin Mascarilla: 1 | Detecciones modelo: 2 | Personas reales rastreadas: 2 ⚠️ ALERTA: Incumplimiento detectado
+[2026-07-14 19:27:29] Personas en escena: 2 | Con Mascarilla: 1 | Sin Mascarilla: 1 | Detecciones modelo: 2 | Personas reales rastreadas: 2 ⚠️ ALERTA: Incumplimiento detectado
+[2026-07-14 19:27:30] Personas en escena: 2 | Con Mascarilla: 1 | Sin Mascarilla: 1 | Detecciones modelo: 2 | Personas reales rastreadas: 2 ⚠️ ALERTA: Incumplimiento detectado
+[2026-07-14 19:27:31] Personas en escena: 2 | Con Mascarilla: 1 | Sin Mascarilla: 1 | Detecciones modelo: 2 | Personas reales rastreadas: 2 ⚠️ ALERTA: Incumplimiento detectado
+[2026-07-14 19:27:32] Personas en escena: 2 | Con Mascarilla: 1 | Sin Mascarilla: 1 | Detecciones modelo: 2 | Personas reales rastreadas: 2 ⚠️ ALERTA: Incumplimiento detectado
+[2026-07-14 19:27:33] Personas en escena: 2 | Con Mascarilla: 1 | Sin Mascarilla: 1 | Detecciones modelo: 2 | Personas reales rastreadas: 2 ⚠️ ALERTA: Incumplimiento detectado
+[2026-07-14 19:27:34] Personas en escena: 2 | Con Mascarilla: 1 | Sin Mascarilla: 1 | Detecciones modelo: 2 | Personas reales rastreadas: 2 ⚠️ ALERTA: Incumplimiento detectado
+[2026-07-14 19:27:35] Personas en escena: 2 | Con Mascarilla: 1 | Sin Mascarilla: 1 | Detecciones modelo: 2 | Personas reales rastreadas: 2 ⚠️ ALERTA: Incumplimiento detectado
+[2026-07-14 19:27:36] Personas en escena: 2 | Con Mascarilla: 1 | Sin Mascarilla: 1 | Detecciones modelo: 2 | Personas reales rastreadas: 2 ⚠️ ALERTA: Incumplimiento detectado
+[2026-07-14 19:27:37] Personas en escena: 2 | Con Mascarilla: 1 | Sin Mascarilla: 1 | Detecciones modelo: 2 | Personas reales rastreadas: 2 ⚠️ ALERTA: Incumplimiento detectado
+[2026-07-14 19:27:38] Personas en escena: 1 | Con Mascarilla: 1 | Sin Mascarilla: 0 | Detecciones modelo: 1 | Personas reales rastreadas: 1
+[2026-07-14 19:27:39] Personas en escena: 1 | Con Mascarilla: 1 | Sin Mascarilla: 0 | Detecciones modelo: 1 | Personas reales rastreadas: 1
+[2026-07-14 19:27:40] Personas en escena: 1 | Con Mascarilla: 1 | Sin Mascarilla: 0 | Detecciones modelo: 1 | Personas reales rastreadas: 1
+[2026-07-14 19:27:41] Personas en escena: 2 | Con Mascarilla: 1 | Sin Mascarilla: 1 | Detecciones modelo: 2 | Personas reales rastreadas: 2 ⚠️ ALERTA: Incumplimiento detectado
+[2026-07-14 19:27:42] Personas en escena: 1 | Con Mascarilla: 1 | Sin Mascarilla: 0 | Detecciones modelo: 1 | Personas reales rastreadas: 1
+[2026-07-14 19:27:43] Personas en escena: 1 | Con Mascarilla: 1 | Sin Mascarilla: 0 | Detecciones modelo: 1 | Personas reales rastreadas: 1
+[2026-07-14 19:27:44] Personas en escena: 2 | Con Mascarilla: 1 | Sin Mascarilla: 1 | Detecciones modelo: 2 | Personas reales rastreadas: 2 ⚠️ ALERTA: Incumplimiento detectado
+[2026-07-14 19:27:45] Personas en escena: 3 | Con Mascarilla: 2 | Sin Mascarilla: 1 | Detecciones modelo: 3 | Personas reales rastreadas: 3 ⚠️ ALERTA: Incumplimiento detectado
+[2026-07-14 19:27:46] Personas en escena: 3 | Con Mascarilla: 2 | Sin Mascarilla: 1 | Detecciones modelo: 3 | Personas reales rastreadas: 3 ⚠️ ALERTA: Incumplimiento detectado
+[2026-07-14 19:27:47] Personas en escena: 2 | Con Mascarilla: 1 | Sin Mascarilla: 1 | Detecciones modelo: 2 | Personas reales rastreadas: 2 ⚠️ ALERTA: Incumplimiento detectado
+[2026-07-14 19:27:48] Personas en escena: 2 | Con Mascarilla: 1 | Sin Mascarilla: 1 | Detecciones modelo: 2 | Personas reales rastreadas: 2 ⚠️ ALERTA: Incumplimiento detectado
+[2026-07-14 19:27:49] Personas en escena: 1 | Con Mascarilla: 0 | Sin Mascarilla: 1 | Detecciones modelo: 1 | Personas reales rastreadas: 1 ⚠️ ALERTA: Incumplimiento detectado
+[2026-07-14 19:27:50] Personas en escena: 1 | Con Mascarilla: 0 | Sin Mascarilla: 1 | Detecciones modelo: 1 | Personas reales rastreadas: 1 ⚠️ ALERTA: Incumplimiento detectado
+[2026-07-14 19:27:51] Personas en escena: 1 | Con Mascarilla: 0 | Sin Mascarilla: 1 | Detecciones modelo: 1 | Personas reales rastreadas: 1 ⚠️ ALERTA: Incumplimiento detectado
+[2026-07-14 19:27:52] Personas en escena: 1 | Con Mascarilla: 0 | Sin Mascarilla: 1 | Detecciones modelo: 1 | Personas reales rastreadas: 1 ⚠️ ALERTA: Incumplimiento detectado
+[2026-07-14 19:27:53] Personas en escena: 1 | Con Mascarilla: 0 | Sin Mascarilla: 1 | Detecciones modelo: 1 | Personas reales rastreadas: 1 ⚠️ ALERTA: Incumplimiento detectado
+[2026-07-14 19:27:54] Personas en escena: 1 | Con Mascarilla: 0 | Sin Mascarilla: 1 | Detecciones modelo: 1 | Personas reales rastreadas: 1 ⚠️ ALERTA: Incumplimiento detectado
+[2026-07-14 19:27:55] Personas en escena: 3 | Con Mascarilla: 2 | Sin Mascarilla: 1 | Detecciones modelo: 3 | Personas reales rastreadas: 3 ⚠️ ALERTA: Incumplimiento detectado

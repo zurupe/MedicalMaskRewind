@@ -9,6 +9,7 @@ class BioseguridadLogger:
         self.filename = filename
         self.state_filename = state_filename
         self.db_path = db_path
+        self.historial_filename = state_filename.replace('.json', '_historial.json')
         self.ultimo_registro_tiempo = None
         self._inicializar_archivo()
 
@@ -28,6 +29,8 @@ class BioseguridadLogger:
             "porcentaje_sin": 0.0,
             "alerta": False,
             "registros": 0,
+            "detecciones_modelo": 0,
+            "personas_reales": 0,
         })
 
     def _crear_tabla_db(self):
@@ -47,15 +50,20 @@ class BioseguridadLogger:
         conn.commit()
         conn.close()
 
-    def registrar(self, total, con_mascarilla, sin_mascarilla, incorrecta):
+    def registrar(self, total, con_mascarilla, sin_mascarilla, incorrecta, detecciones_modelo=None, personas_reales=None):
         if total == 0:
-            return {
+            resumen = {
                 "total": 0,
                 "con_mascarilla": 0,
                 "sin_mascarilla": 0,
                 "alerta": False,
                 "timestamp": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                "detecciones_modelo": 0,
+                "personas_reales": 0,
             }
+            self._guardar_estado(resumen)
+            self._guardar_historial(resumen)
+            return resumen
 
         now = datetime.now()
         fecha = now.strftime("%Y-%m-%d")
@@ -69,7 +77,9 @@ class BioseguridadLogger:
 
         alerta = sin_mascarilla > 0
         alerta_txt = " ⚠️ ALERTA: Incumplimiento detectado" if alerta else ""
-        linea_registro = f"[{tiempo_actual}] Personas en escena: {total} | Con Mascarilla: {con_mascarilla} | Sin Mascarilla: {sin_mascarilla}{alerta_txt}\n"
+        detecciones_modelo = detecciones_modelo if detecciones_modelo is not None else total
+        personas_reales = personas_reales if personas_reales is not None else total
+        linea_registro = f"[{tiempo_actual}] Personas en escena: {personas_reales} | Con Mascarilla: {con_mascarilla} | Sin Mascarilla: {sin_mascarilla} | Detecciones modelo: {detecciones_modelo} | Personas reales rastreadas: {personas_reales}{alerta_txt}\n"
 
         with open(self.filename, mode='a', encoding='utf-8') as file:
             file.write(linea_registro)
@@ -83,8 +93,11 @@ class BioseguridadLogger:
             "porcentaje_con": round((con_mascarilla / total) * 100, 2) if total else 0.0,
             "porcentaje_sin": round((sin_mascarilla / total) * 100, 2) if total else 0.0,
             "registros": self._contar_registros(),
+            "detecciones_modelo": detecciones_modelo,
+            "personas_reales": personas_reales,
         }
         self._guardar_estado(resumen)
+        self._guardar_historial(resumen)
         self._guardar_en_db(resumen)
 
         if alerta:
@@ -114,6 +127,21 @@ class BioseguridadLogger:
         )
         conn.commit()
         conn.close()
+
+    def _guardar_historial(self, resumen):
+        historial = self._leer_historial()
+        historial.append(resumen)
+        with open(self.historial_filename, mode='w', encoding='utf-8') as file:
+            json.dump(historial, file, indent=2)
+
+    def _leer_historial(self):
+        if not os.path.exists(self.historial_filename):
+            return []
+        with open(self.historial_filename, mode='r', encoding='utf-8') as file:
+            try:
+                return json.load(file)
+            except json.JSONDecodeError:
+                return []
 
     def _guardar_estado(self, resumen):
         with open(self.state_filename, mode='w', encoding='utf-8') as file:
@@ -159,18 +187,37 @@ class BioseguridadLogger:
         return [{"timestamp": row[0], "sin_mascarilla": row[1]} for row in rows]
 
     def obtener_resumen_diario(self):
-        conn = sqlite3.connect(self.db_path)
         today = datetime.now().strftime("%Y-%m-%d")
-        cursor = conn.execute(
-            "SELECT COALESCE(SUM(total), 0), COALESCE(SUM(con_mascarilla), 0), COALESCE(SUM(sin_mascarilla), 0) FROM detecciones WHERE substr(timestamp, 1, 10) = ?",
-            (today,),
-        )
-        row = cursor.fetchone()
-        conn.close()
+        historial = self._leer_historial()
+        items = [item for item in historial if str(item.get("timestamp", "")).startswith(today)]
 
-        total = int(row[0] or 0)
-        con_mascarilla = int(row[1] or 0)
-        sin_mascarilla = int(row[2] or 0)
+        if not items:
+            conn = sqlite3.connect(self.db_path)
+            cursor = conn.execute(
+                "SELECT COALESCE(SUM(total), 0), COALESCE(SUM(con_mascarilla), 0), COALESCE(SUM(sin_mascarilla), 0) FROM detecciones WHERE substr(timestamp, 1, 10) = ?",
+                (today,),
+            )
+            row = cursor.fetchone()
+            conn.close()
+
+            total = int(row[0] or 0)
+            con_mascarilla = int(row[1] or 0)
+            sin_mascarilla = int(row[2] or 0)
+            return {
+                "total": total,
+                "con_mascarilla": con_mascarilla,
+                "sin_mascarilla": sin_mascarilla,
+                "porcentaje_con": round((con_mascarilla / total) * 100, 2) if total else 0.0,
+                "porcentaje_sin": round((sin_mascarilla / total) * 100, 2) if total else 0.0,
+                "detecciones_modelo": total,
+                "personas_reales": total,
+            }
+
+        total = sum(int(item.get("total", 0) or 0) for item in items)
+        con_mascarilla = sum(int(item.get("con_mascarilla", 0) or 0) for item in items)
+        sin_mascarilla = sum(int(item.get("sin_mascarilla", 0) or 0) for item in items)
+        detecciones_modelo = sum(int(item.get("detecciones_modelo", 0) or 0) for item in items)
+        personas_reales = sum(int(item.get("personas_reales", 0) or 0) for item in items)
 
         return {
             "total": total,
@@ -178,36 +225,40 @@ class BioseguridadLogger:
             "sin_mascarilla": sin_mascarilla,
             "porcentaje_con": round((con_mascarilla / total) * 100, 2) if total else 0.0,
             "porcentaje_sin": round((sin_mascarilla / total) * 100, 2) if total else 0.0,
+            "detecciones_modelo": detecciones_modelo,
+            "personas_reales": personas_reales,
         }
 
     def obtener_resumen_por_fechas(self, fecha_inicio, fecha_fin):
-        conn = sqlite3.connect(self.db_path)
-        # Fetch totals
-        cursor = conn.execute(
-            "SELECT COALESCE(SUM(total), 0), COALESCE(SUM(con_mascarilla), 0), COALESCE(SUM(sin_mascarilla), 0) FROM detecciones WHERE substr(timestamp, 1, 10) >= ? AND substr(timestamp, 1, 10) <= ?",
-            (fecha_inicio, fecha_fin),
-        )
-        row = cursor.fetchone()
-        
-        total = int(row[0] or 0)
-        con_mascarilla = int(row[1] or 0)
-        sin_mascarilla = int(row[2] or 0)
-        
-        # Fetch details per day
-        cursor_daily = conn.execute(
-            "SELECT substr(timestamp, 1, 10) as fecha, SUM(total), SUM(con_mascarilla), SUM(sin_mascarilla) FROM detecciones WHERE substr(timestamp, 1, 10) >= ? AND substr(timestamp, 1, 10) <= ? GROUP BY fecha ORDER BY fecha DESC",
-            (fecha_inicio, fecha_fin),
-        )
-        daily_rows = cursor_daily.fetchall()
-        conn.close()
-        
+        historial = self._leer_historial()
+        items = [
+            item for item in historial
+            if fecha_inicio <= str(item.get("timestamp", "")).split(" ")[0] <= fecha_fin
+        ]
+
+        total = sum(int(item.get("total", 0) or 0) for item in items)
+        con_mascarilla = sum(int(item.get("con_mascarilla", 0) or 0) for item in items)
+        sin_mascarilla = sum(int(item.get("sin_mascarilla", 0) or 0) for item in items)
+        detecciones_modelo = sum(int(item.get("detecciones_modelo", 0) or 0) for item in items)
+        personas_reales = sum(int(item.get("personas_reales", 0) or 0) for item in items)
+
         daily_data = []
-        for d in daily_rows:
-            d_total = int(d[1] or 0)
-            d_con = int(d[2] or 0)
-            d_sin = int(d[3] or 0)
+        by_day = {}
+        for item in items:
+            fecha = str(item.get("timestamp", "")).split(" ")[0]
+            if fecha not in by_day:
+                by_day[fecha] = {"fecha": fecha, "total": 0, "con": 0, "sin": 0}
+            by_day[fecha]["total"] += int(item.get("total", 0) or 0)
+            by_day[fecha]["con"] += int(item.get("con_mascarilla", 0) or 0)
+            by_day[fecha]["sin"] += int(item.get("sin_mascarilla", 0) or 0)
+
+        for fecha in sorted(by_day.keys(), reverse=True):
+            d = by_day[fecha]
+            d_total = int(d["total"] or 0)
+            d_con = int(d["con"] or 0)
+            d_sin = int(d["sin"] or 0)
             daily_data.append({
-                "fecha": d[0],
+                "fecha": fecha,
                 "total": d_total,
                 "con": d_con,
                 "sin": d_sin,
@@ -222,5 +273,7 @@ class BioseguridadLogger:
             "sin_mascarilla": sin_mascarilla,
             "porcentaje_con": round((con_mascarilla / total) * 100, 2) if total else 0.0,
             "porcentaje_sin": round((sin_mascarilla / total) * 100, 2) if total else 0.0,
+            "detecciones_modelo": detecciones_modelo,
+            "personas_reales": personas_reales,
             "detalles": daily_data
         }
