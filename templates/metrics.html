@@ -53,9 +53,21 @@
     </div>
 </div>
 
-<div class="grid-2">
+<div class="grid-2 mb-4">
     <div class="card">
-        <h3 class="section-title">Distribución de Cumplimiento</h3>
+        <h3 class="section-title">Distribución en Tiempo Real</h3>
+
+        <div class="chart-shell">
+            <canvas id="liveComplianceChart"></canvas>
+        </div>
+
+        <div class="chart-caption mt-3">
+            El pastel muestra la proporción actual de detecciones con y sin mascarilla.
+        </div>
+    </div>
+
+    <div class="card">
+        <h3 class="section-title">Distribución de Cumplimiento Diario</h3>
 
         <div class="chart-shell">
             <canvas id="complianceChart"></canvas>
@@ -85,18 +97,18 @@
             Última actualización: <span id="last_update">--</span>
         </div>
         <div class="chart-caption mt-3">
-            El pastel muestra la proporción de detecciones con y sin mascarilla. La cifra de personas reales puede ser menor porque el rastreo agrupa repeticiones del mismo individuo.
+            El pastel muestra la proporción de detecciones con y sin mascarilla del día.
         </div>
     </div>
+</div>
 
-    <div>
-        <div class="recommendation-box mt-0">
-            <h3 id="recommendation_title">
-                <i class="ph-fill ph-lightbulb"></i>
-                Esperando datos
-            </h3>
-            <p id="recommendation_text">Aún no hay suficiente información diaria para generar una recomendación.</p>
-        </div>
+<div class="grid-1">
+    <div class="recommendation-box mt-0">
+        <h3 id="recommendation_title">
+            <i class="ph-fill ph-lightbulb"></i>
+            Esperando datos
+        </h3>
+        <p id="recommendation_text">Aún no hay suficiente información diaria para generar una recomendación.</p>
     </div>
 </div>
 {% endblock %}
@@ -105,57 +117,87 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
     let complianceChart = null;
+    let liveComplianceChart = null;
 
-    function initComplianceChart() {
-        const ctx = document.getElementById('complianceChart');
-        if (!ctx) return;
-
-        complianceChart = new Chart(ctx, {
-            type: 'doughnut',
-            data: {
-                labels: ['Con mascarilla', 'Sin mascarilla'],
-                datasets: [{
-                    data: [0, 0],
-                    backgroundColor: ['#34d399', '#f87171'],
-                    borderColor: ['#0b0f19', '#0b0f19'],
-                    borderWidth: 2,
-                    hoverOffset: 6,
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'bottom',
-                        labels: {
-                            color: '#f1f5f9',
-                            padding: 16,
-                            usePointStyle: true,
-                            pointStyle: 'circle'
-                        }
-                    },
-                    tooltip: {
-                        callbacks: {
-                            label: (context) => {
-                                const value = context.raw || 0;
-                                const total = context.chart.data.datasets[0].data.reduce((sum, item) => sum + (item || 0), 0);
-                                const pct = total > 0 ? (value / total * 100) : 0;
-                                return `${context.label}: ${value} detecciones (${pct.toFixed(1)}%)`;
-                            }
+    function getChartOptions() {
+        return {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        color: '#f1f5f9',
+                        padding: 16,
+                        usePointStyle: true,
+                        pointStyle: 'circle'
+                    }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: (context) => {
+                            const value = context.raw || 0;
+                            const total = context.chart.data.datasets[0].data.reduce((sum, item) => sum + (item || 0), 0);
+                            const pct = total > 0 ? (value / total * 100) : 0;
+                            return `${context.label}: ${value} detecciones (${pct.toFixed(1)}%)`;
                         }
                     }
                 }
             }
-        });
+        };
     }
 
-    function updateComplianceChart(con, sin) {
-        if (!complianceChart) return;
-        const total = Number(con || 0) + Number(sin || 0);
-        const values = total > 0 ? [Number(con || 0), Number(sin || 0)] : [0, 0];
-        complianceChart.data.datasets[0].data = values;
-        complianceChart.update();
+    function initComplianceCharts() {
+        const liveCtx = document.getElementById('liveComplianceChart');
+        if (liveCtx) {
+            liveComplianceChart = new Chart(liveCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Con mascarilla', 'Sin mascarilla'],
+                    datasets: [{
+                        data: [0, 0],
+                        backgroundColor: ['#34d399', '#f87171'],
+                        borderColor: ['#0b0f19', '#0b0f19'],
+                        borderWidth: 2,
+                        hoverOffset: 6,
+                    }]
+                },
+                options: getChartOptions()
+            });
+        }
+
+        const ctx = document.getElementById('complianceChart');
+        if (ctx) {
+            complianceChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Con mascarilla', 'Sin mascarilla'],
+                    datasets: [{
+                        data: [0, 0],
+                        backgroundColor: ['#34d399', '#f87171'],
+                        borderColor: ['#0b0f19', '#0b0f19'],
+                        borderWidth: 2,
+                        hoverOffset: 6,
+                    }]
+                },
+                options: getChartOptions()
+            });
+        }
+    }
+
+    function updateCharts(liveCon, liveSin, dailyCon, dailySin) {
+        if (liveComplianceChart) {
+            const liveTotal = Number(liveCon || 0) + Number(liveSin || 0);
+            const liveValues = liveTotal > 0 ? [Number(liveCon || 0), Number(liveSin || 0)] : [0, 0];
+            liveComplianceChart.data.datasets[0].data = liveValues;
+            liveComplianceChart.update();
+        }
+        if (complianceChart) {
+            const dailyTotal = Number(dailyCon || 0) + Number(dailySin || 0);
+            const dailyValues = dailyTotal > 0 ? [Number(dailyCon || 0), Number(dailySin || 0)] : [0, 0];
+            complianceChart.data.datasets[0].data = dailyValues;
+            complianceChart.update();
+        }
     }
 
     window.addEventListener('appStateUpdated', (e) => {
@@ -174,7 +216,9 @@
         }
 
         // Diario
-        document.getElementById('daily_total').textContent = data.daily_total;
+        const dailyTotalEl = document.getElementById('daily_total');
+        if (dailyTotalEl) dailyTotalEl.textContent = data.daily_total;
+
         document.getElementById('daily_detecciones_modelo').textContent = data.daily_detecciones_modelo || 0;
         document.getElementById('daily_personas_reales').textContent = data.daily_personas_reales || 0;
         document.getElementById('daily_con').textContent = data.daily_con;
@@ -191,9 +235,9 @@
         document.getElementById('recommendation_title').innerHTML = `<i class="ph-fill ph-lightbulb"></i> ${data.recommendation_title || 'Esperando datos'}`;
         document.getElementById('recommendation_text').textContent = data.recommendation_text || 'Aún no hay suficiente información diaria para una recomendación.';
 
-        updateComplianceChart(data.daily_con || 0, data.daily_sin || 0);
+        updateCharts(data.con_mascarilla || 0, data.sin_mascarilla || 0, data.daily_con || 0, data.daily_sin || 0);
     });
 
-    initComplianceChart();
+    initComplianceCharts();
 </script>
 {% endblock %}
